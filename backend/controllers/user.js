@@ -3,6 +3,8 @@ const User = require("../models/user");
 
 //importation bcrypt
 const bcrypt = require("bcrypt");
+//token
+const jwt = require("jsonwebtoken");
 
 //fonction signup pour enregistrer un nouvel utilisateur
 exports.signup = (req, res, next) => {
@@ -45,7 +47,15 @@ exports.login = (req, res, next) => {
 							error: "Le mot de passe est incorrect.",
 						});
 					}
-					res.status(200).json({ message: "Mot de passe correct." });
+					//password correct : envoi dans la réponse du userId et du token
+					res.status(200).json({
+						userId: user._id,
+						token: jwt.sign(
+							{ userId: user._id },
+							`${process.env.KEY_TOKEN}`,
+							{ expiresIn: "5h" }
+						),
+					});
 				})
 				.catch((error) => res.status(500).json({ error }));
 		})
