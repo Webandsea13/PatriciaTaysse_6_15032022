@@ -19,7 +19,9 @@ const app = express();
 //faire les requetes au format json-(bodyparser inclus dans la version de express)
 app.use(express.json());
 
+//importation des routes
 const userRoutes = require("./routes/user");
+const saucesRoutes = require("./routes/sauces");
 
 //gérer les problèmes de CORS (cross origin request sharing)
 app.use((req, res, next) => {
@@ -45,6 +47,11 @@ app.use((req, res, next) => {
 // 	next();
 // });
 
-app.use("/api", userRoutes);
+//route authentification signup et login
+app.use("/api/auth", userRoutes);
+
+//routes sauces
+//créer une sauce
+app.use("/api/sauces", saucesRoutes);
 
 module.exports = app;
