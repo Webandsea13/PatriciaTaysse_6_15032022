@@ -4,6 +4,9 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 dotenv.config();
 
+//accéder au path pour les images
+const path = require("path");
+
 //connexion base de données
 mongoose
 	.connect(
@@ -25,6 +28,7 @@ const saucesRoutes = require("./routes/sauces");
 
 //gérer les problèmes de CORS (cross origin request sharing)
 app.use((req, res, next) => {
+	//res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 	res.setHeader("Access-Control-Allow-Origin", "*");
 	res.setHeader(
 		"Access-Control-Allow-Headers",
@@ -53,5 +57,8 @@ app.use("/api/auth", userRoutes);
 //routes sauces
 //créer une sauce
 app.use("/api/sauces", saucesRoutes);
+
+//routes images
+//app.use("/images", express.static(path.join(__dirname, "images")));
 
 module.exports = app;
