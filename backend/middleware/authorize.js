@@ -11,11 +11,14 @@ module.exports = (req, res, next) => {
 		const decodedToken = jwt.verify(tokenAuth, `${process.env.KEY_TOKEN}`);
 		//récupérer le userId qui est associé au token
 		const userIdfromtoken = decodedToken.userId;
-		if (req.body.userId && req.body.userId !== userIdfromtoken) {
-			throw "userId non valable";
-		} else {
-			next();
-		}
+
+		// req.authentifiedUserId = userIdfromtoken;
+		// res.locals.authentifiedUserId = userIdfromtoken;
+		// //if (req.body.userId && req.body.userId !== userIdfromtoken) {
+		// //	throw "userId non valable";
+		// } else {
+		next();
+		// }
 	} catch (error) {
 		res.status(401).json({
 			error: error,
