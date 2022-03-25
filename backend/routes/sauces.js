@@ -3,6 +3,8 @@ const router = express.Router();
 
 //importation du controller user
 const saucesController = require("../controllers/sauces");
+//importation du controller pour les like
+const likeController = require("../controllers/like");
 
 //importation du middleware d'authentification
 const authorize = require("../middleware/authorize");
@@ -24,5 +26,8 @@ router.put("/:id", authorize, multer, saucesController.updateSauce);
 
 //supprimer une sauce
 router.delete("/:id", authorize, saucesController.deleteSauce);
+
+//gestion des like
+router.post("/:id/like", authorize, likeController.likeDislikeSauce);
 
 module.exports = router;

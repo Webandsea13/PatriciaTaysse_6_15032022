@@ -58,43 +58,6 @@ exports.readOneSauce = (req, res, next) => {
 };
 
 exports.updateSauce = (req, res, next) => {
-	//trouver d'abord la sauce et son fichier image
-	Sauce.findOne({ _id: req.params.id })
-		.then((sauce) => {
-			const filename = sauce.imageUrl.split("/images/")[1];
-			fs.unlink(`images/${filename}`, () => {
-				//mettre à jour la sauce en gérant avec fichier ou sans fichier
-
-				//est-ce qu'il y a un fichier image dans la req ?
-				const saucefront = req.file
-					? {
-							...JSON.parse(req.body.sauce),
-							imageUrl: `${req.protocol}://${req.get(
-								"host"
-							)}/images/${req.file.filename}`,
-					  }
-					: { ...req.body };
-				Sauce.updateOne(
-					{ _id: req.params.id },
-					{ ...saucefront, _id: req.params.id }
-				)
-					.then(() =>
-						res
-							.status(200)
-							.json({ message: "La sauce a été modifiée." })
-					)
-					.catch((error) =>
-						res.status(400).json({
-							error: error,
-							message: "Impossible de modifier la sauce.",
-						})
-					);
-			});
-		})
-		.catch((error) => res.status(500).json({ error }));
-};
-
-exports.updateSauce2 = (req, res, next) => {
 	if (req.file) {
 		//trouver d'abord la sauce et son fichier image
 		Sauce.findOne({ _id: req.params.id })
@@ -134,25 +97,30 @@ exports.updateSauce2 = (req, res, next) => {
 };
 
 exports.deleteSauce = (req, res, next) => {
-	//trouver la sauce à supprimer pour suppprimer aussi le fichier correspondant
+	//trouver la sauce à supprimer dans la DB pour suppprimer aussi le fichier correspondant sur le serveur
 	Sauce.findOne({ _id: req.params.id })
 		.then((sauce) => {
-			const filename = sauce.imageUrl.split("/images/")[1];
-			fs.unlink(`images/${filename}`, () => {
-				//supprimer la sauce (fonction callback de unlink)
-				Sauce.deleteOne({ _id: req.params.id })
-					.then(() =>
-						res
-							.status(200)
-							.json({ message: "La sauce a été supprimée" })
-					)
-					.catch((error) =>
-						res.status(400).json({
-							error: error,
-							message: "Impossible de supprimer la sauce.",
-						})
-					);
-			});
+			//vérification que userId connecté est identique au userId qui a créé la sauce
+			if (sauce.userId === req.token.userId) {
+				const filename = sauce.imageUrl.split("/images/")[1];
+				fs.unlink(`images/${filename}`, () => {
+					//supprimer la sauce (fonction callback de unlink)
+					Sauce.deleteOne({ _id: req.params.id })
+						.then(() =>
+							res
+								.status(200)
+								.json({ message: "La sauce a été supprimée" })
+						)
+						.catch((error) =>
+							res.status(400).json({
+								error: error,
+								message: "Impossible de supprimer la sauce.",
+							})
+						);
+				});
+			} else {
+				throw "Vous n êtes pas autorisé à effectuer cette action.";
+			}
 		})
 		.catch((error) => res.status(500).json({ error }));
 };

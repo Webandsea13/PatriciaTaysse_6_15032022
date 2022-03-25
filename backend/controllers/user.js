@@ -56,8 +56,10 @@ exports.login2 = async (req, res, next) => {
 				expiresIn: "10h",
 			}),
 		});
-	} catch (error) {
-		return res.status(500).json({ error });
+	} catch {
+		(error) => {
+			return res.status(500).json({ error });
+		};
 	}
 };
 
