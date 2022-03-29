@@ -20,4 +20,7 @@ const storage = multer.diskStorage({
 	},
 });
 
-module.exports = multer({ storage }).single("image");
+module.exports = multer({
+	//fileFilter: function (req, file, cb) {},
+	storage,
+}).single("image");

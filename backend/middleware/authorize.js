@@ -14,14 +14,7 @@ module.exports = (req, res, next) => {
 		//on envoie l'userId dans la req pour pouvoir l'utiliser dans les controllers
 		req.token = { userId: userIdfromtoken };
 
-		//***************code ci dessous à verifier *****************/
-
-		//On compare l'userId récupéré dans le token à l userId
-		if (req.token.userId && req.token.userId !== userIdfromtoken) {
-			throw "userId non valable";
-		} else {
-			next();
-		}
+		next();
 	} catch (error) {
 		res.status(401).json({
 			error: error,

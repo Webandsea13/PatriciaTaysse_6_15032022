@@ -57,12 +57,23 @@ exports.readOneSauce = (req, res, next) => {
 		);
 };
 
-exports.updateSauce = (req, res, next) => {
+exports.updateSauce = async (req, res, next) => {
+	//s'il y a un fichier image dans la req : supprimer l'image actuelle
 	if (req.file) {
 		//trouver d'abord la sauce et son fichier image
 		Sauce.findOne({ _id: req.params.id })
 			.then((sauce) => {
+				//vérification utilisateur
+				if (sauce.userId !== req.token.userId) {
+					return res.status(403).json({
+						error: error,
+						message:
+							"Vous n'êtes pas autorisé à effectuer cette action.",
+					});
+				}
+				//récupérer le nom du fichier image
 				const filename = sauce.imageUrl.split("/images/")[1];
+				//effacer le fichier image
 				fs.unlink(`images/${filename}`, (error) => {
 					if (error) throw error;
 				});
@@ -71,56 +82,99 @@ exports.updateSauce = (req, res, next) => {
 	}
 
 	//mettre à jour la sauce en gérant avec fichier ou sans fichier
+	try {
+		//vérification de l'identité de l'utilisateur
 
-	//est-ce qu'il y a un fichier image dans la req ?
-	const saucefront = req.file
-		? {
-				...JSON.parse(req.body.sauce),
-				imageUrl: `${req.protocol}://${req.get("host")}/images/${
-					req.file.filename
-				}`,
-		  }
-		: { ...req.body };
-	Sauce.updateOne(
-		{ _id: req.params.id },
-		{ ...saucefront, _id: req.params.id }
-	)
-		.then(() =>
-			res.status(200).json({ message: "La sauce a été modifiée." })
-		)
-		.catch((error) =>
-			res.status(400).json({
+		const sauceDB = await Sauce.findOne({ _id: req.params.id });
+		if (sauceDB.userId !== req.token.userId) {
+			return res.status(403).json({
 				error: error,
-				message: "Impossible de modifier la sauce.",
-			})
-		);
+				message: "Vous n'êtes pas autorisé à effectuer cette action.",
+			});
+		}
+		//est-ce qu'il y a un fichier image dans la req ?   ?=oui   :=non
+		const saucefront = req.file
+			? {
+					...JSON.parse(req.body.sauce),
+					imageUrl: `${req.protocol}://${req.get("host")}/images/${
+						req.file.filename
+					}`,
+			  }
+			: { ...req.body };
+		Sauce.updateOne(
+			{ _id: req.params.id },
+			{ ...saucefront, _id: req.params.id }
+		)
+			.then(() =>
+				res.status(200).json({ message: "La sauce a été modifiée." })
+			)
+			.catch((error) =>
+				res.status(400).json({
+					error: error,
+					message: "Impossible de modifier la sauce.",
+				})
+			);
+	} catch {}
 };
 
-exports.deleteSauce = (req, res, next) => {
+exports.deleteSauce = async (req, res, next) => {
 	//trouver la sauce à supprimer dans la DB pour suppprimer aussi le fichier correspondant sur le serveur
-	Sauce.findOne({ _id: req.params.id })
-		.then((sauce) => {
-			//vérification que userId connecté est identique au userId qui a créé la sauce
-			if (sauce.userId === req.token.userId) {
-				const filename = sauce.imageUrl.split("/images/")[1];
-				fs.unlink(`images/${filename}`, () => {
-					//supprimer la sauce (fonction callback de unlink)
-					Sauce.deleteOne({ _id: req.params.id })
-						.then(() =>
-							res
-								.status(200)
-								.json({ message: "La sauce a été supprimée" })
-						)
-						.catch((error) =>
-							res.status(400).json({
-								error: error,
-								message: "Impossible de supprimer la sauce.",
-							})
-						);
+	try {
+		const sauce = await Sauce.findOne({ _id: req.params.id });
+
+		//vérification que userId connecté est identique au userId qui a créé la sauce
+		if (sauce.userId !== req.token.userId) {
+			return res.status(403).json({
+				error: error,
+				message: "Vous n'êtes pas autorisé à effectuer cette action.",
+			});
+		}
+
+		const filename = sauce.imageUrl.split("/images/")[1];
+		fs.unlink(`images/${filename}`, async () => {
+			try {
+				//supprimer la sauce (fonction callback de unlink)
+				await Sauce.deleteOne({ _id: req.params.id });
+				return res
+					.status(200)
+					.json({ message: "La sauce a été supprimée" });
+			} catch (error) {
+				return res.status(400).json({
+					error: error,
+					message: "Impossible de supprimer la sauce.",
 				});
-			} else {
-				throw "Vous n êtes pas autorisé à effectuer cette action.";
 			}
-		})
-		.catch((error) => res.status(500).json({ error }));
+		});
+	} catch (error) {
+		return res.status(500).json({ error });
+	}
 };
+
+// exports.deleteSauce = (req, res, next) => {
+// 	//trouver la sauce à supprimer dans la DB pour suppprimer aussi le fichier correspondant sur le serveur
+// 	Sauce.findOne({ _id: req.params.id })
+// 		.then((sauce) => {
+// 			//vérification que userId connecté est identique au userId qui a créé la sauce
+// 			if (sauce.userId === req.token.userId) {
+// 				const filename = sauce.imageUrl.split("/images/")[1];
+// 				fs.unlink(`images/${filename}`, () => {
+// 					//supprimer la sauce (fonction callback de unlink)
+// 					Sauce.deleteOne({ _id: req.params.id })
+// 						.then(() =>
+// 							res
+// 								.status(200)
+// 								.json({ message: "La sauce a été supprimée" })
+// 						)
+// 						.catch((error) =>
+// 							res.status(400).json({
+// 								error: error,
+// 								message: "Impossible de supprimer la sauce.",
+// 							})
+// 						);
+// 				});
+// 			} else {
+// 				throw "Vous n êtes pas autorisé à effectuer cette action.";
+// 			}
+// 		})
+// 		.catch((error) => res.status(500).json({ error }));
+// };

@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 dotenv.config();
+const helmet = require("helmet");
 
 //accéder au path pour les images
 const path = require("path");
@@ -21,6 +22,7 @@ mongoose
 const app = express();
 //faire les requetes au format json-(bodyparser inclus dans la version de express)
 app.use(express.json());
+app.use(helmet());
 
 //importation des routes
 const userRoutes = require("./routes/user");
@@ -28,7 +30,7 @@ const saucesRoutes = require("./routes/sauces");
 
 //gérer les problèmes de CORS (cross origin request sharing)
 app.use((req, res, next) => {
-	//res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+	res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
 	res.setHeader("Access-Control-Allow-Origin", "*");
 	res.setHeader(
 		"Access-Control-Allow-Headers",
@@ -41,16 +43,6 @@ app.use((req, res, next) => {
 	next();
 });
 
-// app.use((req, res, next) => {
-// 	console.log("première requete");
-// 	next();
-// });
-
-// app.use((req, res, next) => {
-// 	res.json({ message: "ça fonctionne toujours !" });
-// 	next();
-// });
-
 //route authentification signup et login
 app.use("/api/auth", userRoutes);
 
@@ -60,5 +52,10 @@ app.use("/api/sauces", saucesRoutes);
 
 //routes images
 app.use("/images", express.static(path.join(__dirname, "images")));
+
+//gestion erreur globale
+app.use(function (err, req, res, next) {
+	res.status(500).send("Something broke!");
+});
 
 module.exports = app;
