@@ -51,9 +51,6 @@ Value : {
 http://localhost:3000/api/sauces
 
 Authorization : bearer token token : XXXX
-Body-raw : {
-"userId":"xxx"
-}
 
 ## La route GET pour lire une sauce
 
@@ -61,9 +58,6 @@ http://localhost:3000/api/sauces/:id
 
 Authorization : bearer token token : XXXX
 Params : key : id (id sauce : \_id=req.params.id)
-Body-raw : {
-"userId":"xxx"
-}
 
 ## La route PUT pour modifier une sauce
 
@@ -101,3 +95,9 @@ Params : key : id (id sauce : \_id=req.params.id)
 ## La route POST pour liker ou disliker une sauce
 
 http://localhost:3000/api/sauces/:id/like
+
+Authorization : bearer token token : XXXX
+Params : key : id (id sauce : \_id=req.params.id)
+Body_raw :
+{"userId" : "xxx",
+"like" : X}

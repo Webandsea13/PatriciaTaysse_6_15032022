@@ -47,7 +47,7 @@ exports.likeDislikeSauce = async (req, res, next) => {
 				.catch((error) =>
 					res.status(400).json({
 						error: error,
-						message: "impossible de disliker",
+						message: "impossible d'annuler le like",
 					})
 				);
 		}
@@ -101,14 +101,14 @@ exports.likeDislikeSauce = async (req, res, next) => {
 				.catch((error) =>
 					res.status(400).json({
 						error: error,
-						message: "impossible de disliker",
+						message: "impossible d'annuler le dislike",
 					})
 				);
 		}
 	} catch (error) {
 		return res.status(404).json({
 			error: error,
-			message: "impossible de trouver la sauce dans la db",
+			message: "Action impossible",
 		});
 	}
 };

@@ -24,12 +24,12 @@ exports.createSauce = (req, res, next) => {
 	sauce
 		.save()
 		.then(() => {
-			res.status(201).json({ message: "Sauce enregistrée dans la DB" });
+			res.status(201).json({ message: "Sauce créée." });
 		})
 		.catch((error) =>
 			res.status(400).json({
 				error: error,
-				message: "Impossible d enregistrer la sauce",
+				message: "Impossible de créer la sauce",
 			})
 		);
 };
@@ -40,7 +40,7 @@ exports.readAllSauce = (req, res, next) => {
 		.catch((error) =>
 			res.status(400).json({
 				error: error,
-				message: "Impossible d accéder aux sauces. ",
+				message: "Impossible d/' afficher les sauces. ",
 			})
 		);
 };
@@ -52,46 +52,46 @@ exports.readOneSauce = (req, res, next) => {
 		.catch((error) =>
 			res.status(404).json({
 				error: error,
-				message: "impossible d afficher la sauce.",
+				message: "impossible d/' afficher la sauce.",
 			})
 		);
 };
 
 exports.updateSauce = async (req, res, next) => {
+	//On cherche la sauce à modifier
+	const sauceDB = await Sauce.findOne({ _id: req.params.id });
+	if (sauceDB == null) {
+		return res.status(404).json({ message: "Sauce introuvable." });
+	}
+
+	//Vérification de l'autorisation de l'utilisateur
+	if (sauceDB.userId !== req.token.userId) {
+		return res.status(403).json({
+			message: "Vous n'êtes pas autorisé à effectuer cette action.",
+		});
+	}
+
 	//s'il y a un fichier image dans la req : supprimer l'image actuelle
 	if (req.file) {
-		//trouver d'abord la sauce et son fichier image
-		Sauce.findOne({ _id: req.params.id })
-			.then((sauce) => {
-				//vérification utilisateur
-				if (sauce.userId !== req.token.userId) {
-					return res.status(403).json({
-						error: error,
-						message:
-							"Vous n'êtes pas autorisé à effectuer cette action.",
-					});
-				}
-				//récupérer le nom du fichier image
-				const filename = sauce.imageUrl.split("/images/")[1];
-				//effacer le fichier image
-				fs.unlink(`images/${filename}`, (error) => {
-					if (error) throw error;
+		try {
+			//récupérer le nom du fichier image
+			const filename = sauceDB.imageUrl.split("/images/")[1];
+			//effacer le fichier image
+			fs.unlink(`images/${filename}`, (error) => {
+				if (error) throw error;
+			});
+		} catch (error) {
+			return res
+				.status(500)
+				.json({
+					error: error,
+					message: "Impossible de remplacer l/'image.",
 				});
-			})
-			.catch((error) => res.status(500).json({ error }));
+		}
 	}
 
 	//mettre à jour la sauce en gérant avec fichier ou sans fichier
 	try {
-		//vérification de l'identité de l'utilisateur
-
-		const sauceDB = await Sauce.findOne({ _id: req.params.id });
-		if (sauceDB.userId !== req.token.userId) {
-			return res.status(403).json({
-				error: error,
-				message: "Vous n'êtes pas autorisé à effectuer cette action.",
-			});
-		}
 		//est-ce qu'il y a un fichier image dans la req ?   ?=oui   :=non
 		const saucefront = req.file
 			? {
@@ -101,20 +101,17 @@ exports.updateSauce = async (req, res, next) => {
 					}`,
 			  }
 			: { ...req.body };
-		Sauce.updateOne(
+		await Sauce.updateOne(
 			{ _id: req.params.id },
 			{ ...saucefront, _id: req.params.id }
-		)
-			.then(() =>
-				res.status(200).json({ message: "La sauce a été modifiée." })
-			)
-			.catch((error) =>
-				res.status(400).json({
-					error: error,
-					message: "Impossible de modifier la sauce.",
-				})
-			);
-	} catch {}
+		);
+		return res.status(200).json({ message: "La sauce a été modifiée." });
+	} catch (error) {
+		return res.status(500).json({
+			error: error,
+			message: "Impossible de modifier la sauce.",
+		});
+	}
 };
 
 exports.deleteSauce = async (req, res, next) => {
@@ -137,7 +134,7 @@ exports.deleteSauce = async (req, res, next) => {
 				await Sauce.deleteOne({ _id: req.params.id });
 				return res
 					.status(200)
-					.json({ message: "La sauce a été supprimée" });
+					.json({ message: "La sauce a été supprimée." });
 			} catch (error) {
 				return res.status(400).json({
 					error: error,
@@ -146,7 +143,9 @@ exports.deleteSauce = async (req, res, next) => {
 			}
 		});
 	} catch (error) {
-		return res.status(500).json({ error });
+		return res
+			.status(500)
+			.json({ error: error, message: "Action impossible." });
 	}
 };
 
